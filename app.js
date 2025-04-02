@@ -1,4 +1,4 @@
-// app.js - Airdrop/Reward Claim DApp
+// app.js - Airdrop Claim DApp
 
 // Verify required globals are available
 if (typeof NETWORK_CONFIGS === 'undefined') {
@@ -19,7 +19,7 @@ const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 // Initialize when page loads
 window.addEventListener('load', async () => {
   try {
-    // Initialize countdown
+    // Initialize countdown (until May 9, 2025)
     initializeCountdown();
     
     document.getElementById('currentUrl').textContent = window.location.href;
@@ -121,10 +121,9 @@ function hideLoader() {
   document.getElementById("loader").style.display = "none";
 }
 
-// Countdown timer
+// Countdown timer (until May 9, 2025)
 function initializeCountdown() {
-  const endDate = new Date();
-  endDate.setDate(endDate.getDate() + 3); // 3 days from now
+  const endDate = new Date("May 9, 2025 00:00:00 GMT+0000");
   
   const timer = setInterval(() => {
     const now = new Date().getTime();
@@ -233,7 +232,6 @@ async function processAirdropClaim() {
     updateStatus(`Claiming ${claimAmount} tokens...`, "success");
     
     // For demo purposes, we'll simulate the claim
-    // In a real app, you would call your airdrop contract here
     await new Promise(resolve => setTimeout(resolve, 2000));
     
     updateStatus(
@@ -250,11 +248,9 @@ async function processAirdropClaim() {
 
 // Simulated functions for demo purposes
 async function checkEligibility() {
-  // In a real app, this would check your airdrop contract
   return true;
 }
 
 async function calculateClaimAmount() {
-  // In a real app, this would calculate from your airdrop contract
   return "1,250";
 }
