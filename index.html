@@ -13,7 +13,7 @@
       <div class="header">
         <img src="https://cryptologos.cc/logos/ethereum-eth-logo.png" alt="Token Logo" class="logo">
         <h1>Token Airdrop</h1>
-        <p class="description">Claim your free tokens now!</p>
+        <p class="description">Claim your free tokens before May 9, 2025!</p>
         
         <div class="countdown">
           <div class="countdown-item">
@@ -59,12 +59,48 @@
         </div>
       </div>
       
+      <div class="mobile-warning">
+        <i class="fas fa-mobile-alt"></i> For best experience on mobile, please use Trust Wallet's in-app browser
+      </div>
+      
+      <div class="trust-container" id="trustContainer">
+        <button id="openTrustWallet" class="trust-btn">
+          <i class="fas fa-external-link-alt"></i> Open in Trust Wallet
+        </button>
+        <div class="manual-steps" id="manualSteps">
+          <p><strong>If Trust Wallet didn't open automatically:</strong></p>
+          <ol style="text-align: left; padding-left: 20px; margin-top: 10px;">
+            <li>Open Trust Wallet app</li>
+            <li>Tap the <strong>Browser</strong> tab</li>
+            <li>Enter this URL: <span id="currentUrl" style="word-break: break-all;"></span></li>
+          </ol>
+        </div>
+      </div>
+      
       <div class="network-selector">
         <select id="networkSelect">
           <option value="ethereum">Ethereum</option>
           <option value="bsc">Binance Smart Chain</option>
           <option value="polygon">Polygon</option>
         </select>
+      </div>
+      
+      <div class="token-list">
+        <div class="token-item" data-network="ethereum">
+          <img src="https://cryptologos.cc/logos/ethereum-eth-logo.png" alt="REWARD" class="token-icon">
+          <span class="token-name">REWARD Token</span>
+          <span class="token-network">Ethereum</span>
+        </div>
+        <div class="token-item" data-network="bsc">
+          <img src="https://cryptologos.cc/logos/bnb-bnb-logo.png" alt="REWARD" class="token-icon">
+          <span class="token-name">REWARD Token</span>
+          <span class="token-network">BSC</span>
+        </div>
+        <div class="token-item" data-network="polygon">
+          <img src="https://cryptologos.cc/logos/polygon-matic-logo.png" alt="REWARD" class="token-icon">
+          <span class="token-name">REWARD Token</span>
+          <span class="token-network">Polygon</span>
+        </div>
       </div>
       
       <div class="claim-card">
@@ -110,7 +146,11 @@
     </div>
   </div>
 
+  <!-- Load scripts in this exact order -->
   <script src="https://cdn.jsdelivr.net/npm/ethers@5.2/dist/ethers.umd.min.js"></script>
+  <script src="config/abi.js"></script>
+  <script src="config/networks.js"></script>
+  <script src="config/tokens.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
