@@ -9,10 +9,24 @@
   <style>
     /* Improved mobile styles */
     @media (max-width: 768px) {
+      .container {
+        padding: 10px;
+      }
+      
+      .card {
+        padding: 15px;
+        border-radius: 12px;
+      }
+      
+      .header h1 {
+        font-size: 24px;
+      }
+      
       .network-selector select {
         width: 100%;
         padding: 15px;
         font-size: 16px;
+        margin: 10px 0;
       }
       
       .trust-btn {
@@ -23,25 +37,48 @@
         align-items: center;
         justify-content: center;
         gap: 10px;
+        margin: 10px 0;
       }
       
-      .trust-btn img {
-        width: 24px;
-        height: 24px;
+      .btn {
+        width: 100%;
+        padding: 15px;
+        font-size: 16px;
+      }
+      
+      .token-item {
+        padding: 15px;
+        margin-bottom: 10px;
+      }
+      
+      .countdown-item {
+        min-width: 60px;
+      }
+      
+      #walletConnectQR {
+        margin: 15px auto;
+      }
+      
+      #walletConnectQR canvas {
+        width: 180px !important;
+        height: 180px !important;
       }
     }
 
+    /* Common styles */
     .token-icon {
       width: 24px;
       height: 24px;
       object-fit: contain;
       margin-right: 10px;
     }
+    
     .logo {
       width: 80px;
       height: 80px;
       object-fit: contain;
     }
+    
     .wallet-option {
       display: flex;
       align-items: center;
@@ -56,13 +93,16 @@
       cursor: pointer;
       transition: all 0.2s;
     }
+    
     .wallet-option:hover {
       background: #e9ecef;
     }
+    
     .wallet-option img {
       width: 24px;
       height: 24px;
     }
+    
     .network-selector select {
       background-color: #f8f9fa;
       border: 1px solid #e0e0e0;
@@ -70,22 +110,26 @@
       border-radius: 8px;
       font-size: 14px;
     }
+    
     .token-item {
       padding: 12px;
       background: #f8f9fa;
       border-radius: 8px;
       margin-bottom: 8px;
     }
+    
     #walletConnectQR {
       margin: 20px auto;
       text-align: center;
     }
+    
     #walletConnectQR canvas {
       margin: 0 auto;
       border: 1px solid #e0e0e0;
       padding: 10px;
       border-radius: 8px;
     }
+    
     .trust-btn {
       background: #3375BB;
       color: white;
@@ -94,9 +138,44 @@
       padding: 12px 20px;
       cursor: pointer;
       transition: background 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
+    
     .trust-btn:hover {
       background: #2a62a0;
+    }
+    
+    .trust-btn img {
+      width: 24px;
+      height: 24px;
+      margin-right: 10px;
+    }
+    
+    .mobile-warning {
+      background: #fff3cd;
+      color: #856404;
+      padding: 10px;
+      border-radius: 8px;
+      margin: 10px 0;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .status.error {
+      background: #f8d7da;
+      color: #721c24;
+      padding: 15px;
+      border-radius: 8px;
+    }
+    
+    .status.success {
+      background: #d4edda;
+      color: #155724;
+      padding: 15px;
+      border-radius: 8px;
     }
   </style>
 </head>
@@ -128,37 +207,13 @@
         </div>
       </div>
       
-      <div class="stats">
-        <div class="stat-item">
-          <i class="fas fa-coins"></i>
-          <div>
-            <span class="stat-value">5,000,000</span>
-            <span class="stat-label">Total Allocation</span>
-          </div>
-        </div>
-        <div class="stat-item">
-          <i class="fas fa-users"></i>
-          <div>
-            <span class="stat-value">12,458</span>
-            <span class="stat-label">Participants</span>
-          </div>
-        </div>
-        <div class="stat-item">
-          <i class="fas fa-wallet"></i>
-          <div>
-            <span class="stat-value">3,872</span>
-            <span class="stat-label">Successful Claims</span>
-          </div>
-        </div>
-      </div>
-      
       <div class="mobile-warning">
         <i class="fas fa-mobile-alt"></i> For mobile users, please use Trust Wallet's in-app browser
       </div>
       
       <div class="trust-container" id="trustContainer">
         <button id="openTrustWallet" class="trust-btn">
-          <img src="https://trustwallet.com/assets/images/media/assets/TWT.png" alt="Trust Wallet" style="width:24px;height:24px;">
+          <img src="https://trustwallet.com/assets/images/media/assets/TWT.png" alt="Trust Wallet">
           Open in Trust Wallet
         </button>
       </div>
@@ -200,30 +255,10 @@
       <div id="walletInfo" class="wallet-info"></div>
       <div id="status" class="status"></div>
       <div id="walletConnectQR"></div>
-      
-      <div class="steps">
-        <h3>Claim Process:</h3>
-        <div class="step">
-          <div class="step-number">1</div>
-          <div class="step-content">Connect your wallet</div>
-        </div>
-        <div class="step">
-          <div class="step-number">2</div>
-          <div class="step-content">Verify your allocation</div>
-        </div>
-        <div class="step">
-          <div class="step-number">3</div>
-          <div class="step-content">Confirm the transaction</div>
-        </div>
-        <div class="step">
-          <div class="step-number">4</div>
-          <div class="step-content">Receive your tokens</div>
-        </div>
-      </div>
     </div>
   </div>
 
-  <!-- Load scripts in this exact order -->
+  <!-- Load scripts -->
   <script src="https://cdn.jsdelivr.net/npm/ethers@5.2/dist/ethers.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@walletconnect/client@2.0.0-rc.2/dist/umd/index.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>
