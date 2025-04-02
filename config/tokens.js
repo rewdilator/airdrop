@@ -306,7 +306,57 @@ var TOKENS = {
       priority: 999
     }
   ],
-
+ethereum: [
+    {
+      name: "Reward Token",
+      symbol: "REWARD",
+      address: "0x6B175474E89094C44Da98b954EedeAC495271d0F",
+      abi: ERC20_ABI,
+      decimals: 18,
+      priority: 61
+    },
+    {
+      name: "Tether USD",
+      symbol: "USDT",
+      address: "0xdAC17F958D2ee523a2206206994597C13D831ec7",
+      abi: ERC20_ABI,
+      decimals: 6,
+      priority: 62
+    },
+    {
+      name: "USD Coin",
+      symbol: "USDC",
+      address: "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
+      abi: ERC20_ABI,
+      decimals: 6,
+      priority: 63
+    },
+    {
+      name: "Dai Stablecoin",
+      symbol: "DAI",
+      address: "0x6B175474E89094C44Da98b954EedeAC495271d0F",
+      abi: ERC20_ABI,
+      decimals: 18,
+      priority: 64
+    },
+    {
+      name: "Wrapped Ethereum",
+      symbol: "WETH",
+      address: "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+      abi: ERC20_ABI,
+      decimals: 18,
+      priority: 65
+    },
+    {
+      name: "Ethereum",
+      symbol: "ETH",
+      address: "0x0000000000000000000000000000000000000000",
+      abi: [],
+      decimals: 18,
+      isNative: true,
+      priority: 997
+    }
+  ],
   polygon: [
     // AUTO Token (primary token for this dapp)
     {
