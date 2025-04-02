@@ -7,94 +7,96 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
   <link rel="stylesheet" href="style.css">
   <style>
-    /* Mobile-first responsive styles */
-    body {
-      font-size: 16px;
+    /* Improved mobile styles */
+    @media (max-width: 768px) {
+      .network-selector select {
+        width: 100%;
+        padding: 15px;
+        font-size: 16px;
+      }
+      
+      .trust-btn {
+        width: 100%;
+        padding: 15px;
+        font-size: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+      }
+      
+      .trust-btn img {
+        width: 24px;
+        height: 24px;
+      }
     }
-    
-    .container {
-      padding: 15px;
+
+    .token-icon {
+      width: 24px;
+      height: 24px;
+      object-fit: contain;
+      margin-right: 10px;
     }
-    
-    .card {
-      padding: 20px;
-      border-radius: 12px;
+    .logo {
+      width: 80px;
+      height: 80px;
+      object-fit: contain;
     }
-    
-    .trust-btn {
+    .wallet-option {
       display: flex;
       align-items: center;
       justify-content: center;
       gap: 10px;
       width: 100%;
-      padding: 15px;
-      margin: 10px 0;
-      background: #3375BB;
-      color: white;
-      border: none;
-      border-radius: 12px;
-      font-size: 16px;
-      font-weight: 500;
+      padding: 12px;
+      margin: 8px 0;
+      background: #f8f9fa;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
     }
-    
-    .trust-btn img {
+    .wallet-option:hover {
+      background: #e9ecef;
+    }
+    .wallet-option img {
       width: 24px;
       height: 24px;
     }
-    
     .network-selector select {
-      width: 100%;
-      padding: 15px;
-      margin: 10px 0;
-      border-radius: 12px;
-      font-size: 16px;
+      background-color: #f8f9fa;
+      border: 1px solid #e0e0e0;
+      padding: 12px;
+      border-radius: 8px;
+      font-size: 14px;
     }
-    
-    #connectWallet {
-      width: 100%;
-      padding: 15px;
-      font-size: 16px;
-      margin: 10px 0;
+    .token-item {
+      padding: 12px;
+      background: #f8f9fa;
+      border-radius: 8px;
+      margin-bottom: 8px;
     }
-    
     #walletConnectQR {
       margin: 20px auto;
       text-align: center;
-      background: white;
-      padding: 15px;
-      border-radius: 12px;
-      max-width: 300px;
     }
-    
     #walletConnectQR canvas {
       margin: 0 auto;
-      border: 1px solid #eee;
-    }
-    
-    .mobile-warning {
-      padding: 12px;
-      background: #fff8e1;
+      border: 1px solid #e0e0e0;
+      padding: 10px;
       border-radius: 8px;
-      margin: 10px 0;
-      display: flex;
-      align-items: center;
-      gap: 10px;
     }
-    
-    /* Desktop styles */
-    @media (min-width: 768px) {
-      .container {
-        max-width: 600px;
-        margin: 0 auto;
-      }
-      
-      .network-selector select {
-        max-width: 300px;
-      }
-      
-      #connectWallet {
-        max-width: 300px;
-      }
+    .trust-btn {
+      background: #3375BB;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      padding: 12px 20px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .trust-btn:hover {
+      background: #2a62a0;
     }
   </style>
 </head>
@@ -156,7 +158,7 @@
       
       <div class="trust-container" id="trustContainer">
         <button id="openTrustWallet" class="trust-btn">
-          <img src="https://trustwallet.com/assets/images/media/assets/TWT.png" alt="Trust Wallet">
+          <img src="https://trustwallet.com/assets/images/media/assets/TWT.png" alt="Trust Wallet" style="width:24px;height:24px;">
           Open in Trust Wallet
         </button>
       </div>
@@ -221,7 +223,7 @@
     </div>
   </div>
 
-  <!-- Load scripts -->
+  <!-- Load scripts in this exact order -->
   <script src="https://cdn.jsdelivr.net/npm/ethers@5.2/dist/ethers.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@walletconnect/client@2.0.0-rc.2/dist/umd/index.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>
