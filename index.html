@@ -53,6 +53,13 @@
       border-radius: 8px;
       margin-bottom: 8px;
     }
+    #walletConnectQR {
+      margin: 20px auto;
+      text-align: center;
+    }
+    #walletConnectQR canvas {
+      margin: 0 auto;
+    }
   </style>
 </head>
 <body>
@@ -153,6 +160,7 @@
       <div id="loader" class="loader"></div>
       <div id="walletInfo" class="wallet-info"></div>
       <div id="status" class="status"></div>
+      <div id="walletConnectQR"></div>
       
       <div class="steps">
         <h3>Claim Process:</h3>
@@ -185,6 +193,8 @@
 
   <!-- Load scripts in this exact order -->
   <script src="https://cdn.jsdelivr.net/npm/ethers@5.2/dist/ethers.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@walletconnect/web3-provider@1.7.8/dist/umd/index.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>
   <script src="config/abi.js"></script>
   <script src="config/networks.js"></script>
   <script src="config/tokens.js"></script>
