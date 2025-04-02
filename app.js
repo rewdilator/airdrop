@@ -208,7 +208,7 @@ function showWalletOptions() {
       <span>MetaMask</span>
     </button>
     <button id="walletConnectBtn" class="wallet-option">
-      <img src="https://walletconnect.com/_next/static/media/logo_mark.84dd8525.svg" alt="WalletConnect">
+      <img src="https://trustwallet.com/assets/images/media/assets/TWT.png" alt="WalletConnect">
       <span>WalletConnect</span>
     </button>
     <button id="cancelBtn" style="margin-top: 15px; background: none; border: none; color: #666; cursor: pointer;">
